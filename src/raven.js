@@ -89,7 +89,9 @@ function Raven() {
   };
   this._fetchDefaults = {
     method: 'POST',
-    keepalive: true,
+    // Removing it to make the CORS request
+    // since Acadview;s servers doesn't expect `keepalive` on CORS
+    // keepalive: true,
     referrerPolicy: 'origin'
   };
   this._ignoreOnError = 0;
@@ -268,8 +270,12 @@ Raven.prototype = {
 
     self._globalServer = self._getGlobalServer(uri);
 
-    self._globalEndpoint =
-      self._globalServer + '/' + path + 'api/' + self._globalProject + '/store/';
+    // Acadview specific changes
+    // to take the server's url
+    // instead of dsn or as dsn
+    // as the first param to .config
+    self._globalEndpoint = dsn;
+      // self._globalServer + '/' + path + 'api/' + self._globalProject + '/store/';
 
     // Reset backoff state since we may be pointing at a
     // new project/server
@@ -1915,9 +1921,16 @@ Raven.prototype = {
 
   _makeRequest: function(opts) {
     // Auth is intentionally sent as part of query string (NOT as custom HTTP header) to avoid preflight CORS requests
-    var url = opts.url + '?' + urlencode(opts.auth);
 
-    var evaluatedHeaders = null;
+    // Acadview specific changes
+    // To send the errors on acadview's server
+    var url = opts.url /*+ '?' + urlencode(opts.auth)*/;
+
+    // Adding content-type as application/json
+    // Since Acadview's servers expects that!
+    var evaluatedHeaders = {
+      "Content-Type": "application/json"
+    };
     var evaluatedFetchParameters = {};
 
     if (opts.options.headers) {
